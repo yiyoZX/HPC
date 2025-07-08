@@ -1,22 +1,38 @@
+# docker-compose.yml
 version: '3.9'
 
 services:
+  orquestador:
+    build: ./orquestador
+    image: orquestador
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./datos:/datos
+    container_name: orquestador
+
+  generador:
+    build: ./generador
+    image: generador
+    ports:
+      - "5002:5002"
+    volumes:
+      - ./datos:/datos
+    environment:
+      - ORQUESTADOR_URL=http://orquestador:5000
+
   jax:
     build: ./maquina1
     image: jax-red
+    depends_on:
+      - orquestador
     volumes:
       - ./datos:/datos
 
   numpy:
     build: ./maquina2
     image: numpy-red
+    depends_on:
+      - orquestador
     volumes:
       - ./datos:/datos
-
-  orquestador:
-    build: ./orquestador
-    stdin_open: true
-    tty: true
-    volumes:
-      - ./datos:/datos
-    container_name: orquestador
