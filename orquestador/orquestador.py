@@ -42,11 +42,7 @@ def recibir_resultado():
         if not all([quien, n, resultado]):
             return jsonify({"error": "Faltan campos requeridos"}), 400
 
-        # Validar que 'quien' sea válido
-        if quien not in ["jax", "numpy"]:
-            return jsonify({"error": "Campo 'quien' debe ser 'jax' o 'numpy'"}), 400
-
-        # Almacenar resultados
+        # Almacenar resultados por máquina de forma dinámica
         resultados.setdefault(n, {})[quien] = resultado
         print(f"Recibido resultado de {quien} para {n}: {resultado}")
 
@@ -55,28 +51,24 @@ def recibir_resultado():
         with open("/datos/resultados_totales.json", "w") as f:
             json.dump(resultados, f, indent=2)
 
-        # Verificar si tenemos ambos resultados para esta n
-        if set(resultados[n].keys()) >= {"jax", "numpy"}:
-            jax_res = resultados[n]["jax"]
-            numpy_res = resultados[n]["numpy"]
-            print(f"\nComparación con {n} muestras:")
-            print(f"JAX   → Precisión: {jax_res['precision']:.4f} | Tiempo: {jax_res['tiempo']:.2f}s")
-            print(f"NumPy → Precisión: {numpy_res['precision']:.4f} | Tiempo: {numpy_res['tiempo']:.2f}s")
+        # Mostrar resultados recibidos para esta n
+        print(f"\nResultados para {n}:")
+        for maquina, res in resultados[n].items():
+            print(f"{maquina} → Precisión: {res.get('precision', 'N/A')} | Tiempo: {res.get('tiempo', 'N/A')}s")
 
         # Verificar completitud para todas las cantidades
         cantidades = set(str(v) for v in config.get("cantidades", [1000, 5000, 10000]))
         completado = cantidades.issubset(resultados.keys())
-        todos_resultados = all(set(res.keys()) >= {"jax", "numpy"} for res in resultados.values())
         
         response_data = {
             "ok": True, 
             "mensaje": "Resultado almacenado",
-            "completado": completado and todos_resultados,
+            "completado": completado,
             "total_cantidades": len(cantidades),
-            "cantidades_completadas": len([k for k in resultados.keys() if set(resultados[k].keys()) >= {"jax", "numpy"}])
+            "cantidades_completadas": len([k for k in resultados.keys() if resultados[k]])
         }
 
-        if completado and todos_resultados:
+        if completado:
             print("\n¡Todas las tareas completadas!")
             response_data["mensaje"] = "Todas las tareas completadas. El generador de gráficos será notificado."
 
@@ -96,14 +88,12 @@ def get_status():
         cantidad_str = str(cantidad)
         if cantidad_str in resultados:
             status[cantidad_str] = {
-                "jax": "jax" in resultados[cantidad_str],
-                "numpy": "numpy" in resultados[cantidad_str],
-                "completo": set(resultados[cantidad_str].keys()) >= {"jax", "numpy"}
+                "maquinas": list(resultados[cantidad_str].keys()),
+                "completo": bool(resultados[cantidad_str])
             }
         else:
             status[cantidad_str] = {
-                "jax": False,
-                "numpy": False,
+                "maquinas": [],
                 "completo": False
             }
     
