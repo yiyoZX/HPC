@@ -1,0 +1,22 @@
+version: '3.9'
+
+services:
+  jax:
+    build: ./maquina1
+    image: jax-red
+    volumes:
+      - ./datos:/datos
+
+  numpy:
+    build: ./maquina2
+    image: numpy-red
+    volumes:
+      - ./datos:/datos
+
+  orquestador:
+    build: ./orquestador
+    stdin_open: true
+    tty: true
+    volumes:
+      - ./datos:/datos
+    container_name: orquestador
