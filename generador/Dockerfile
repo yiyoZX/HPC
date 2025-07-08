@@ -1,8 +1,8 @@
 # Dockerfile para el generador de gráficos
-FROM python:3.9-slim
+FROM python:3.12-slim
 
 # Instalar dependencias del sistema
-RUN apt-get update && apt-get install -y \
+RUN apt update && apt upgrade && apt install -y \
     gcc \
     g++ \
     && rm -rf /var/lib/apt/lists/*
